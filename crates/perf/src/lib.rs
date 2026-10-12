@@ -186,6 +186,7 @@ pub mod dispatch {
 pub mod iter {
     /// 添字アクセス（境界チェックが残りやすい）
     #[must_use]
+    #[allow(clippy::needless_range_loop)] // 比較のためにわざと添字で書く
     pub fn dot_index(a: &[f32], b: &[f32]) -> f32 {
         let mut s = 0.0;
         for i in 0..a.len() {
@@ -217,6 +218,7 @@ pub mod iter {
     }
 
     #[must_use]
+    #[allow(clippy::needless_range_loop)]
     pub fn sum_u64_index(v: &[u64]) -> u64 {
         let mut s = 0u64;
         for i in 0..v.len() {
@@ -238,7 +240,7 @@ pub mod layout {
         pub vel: [f32; 3],
         pub mass: f32,
         pub charge: f32,
-        pub _pad: [f32; 8],
+        pub pad: [f32; 8],
     }
 
     #[must_use]
@@ -290,9 +292,7 @@ pub mod errors {
         }
         let mut n = 0u64;
         for c in s.chars() {
-            let d = c
-                .to_digit(10)
-                .ok_or_else(|| anyhow::anyhow!("bad digit {c:?}"))?;
+            let d = c.to_digit(10).ok_or_else(|| anyhow::anyhow!("bad digit {c:?}"))?;
             n = n * 10 + u64::from(d);
         }
         Ok(n)
@@ -304,10 +304,7 @@ pub mod small {
 
     #[must_use]
     pub fn tokens_vec(lines: &[&str]) -> usize {
-        lines
-            .iter()
-            .map(|l| l.split(' ').collect::<Vec<_>>().len())
-            .sum()
+        lines.iter().map(|l| l.split(' ').collect::<Vec<_>>().len()).sum()
     }
 
     #[must_use]

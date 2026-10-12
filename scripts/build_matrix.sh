@@ -14,9 +14,9 @@ CONFIGS=(
   "dev: cargo 既定（deps も opt0, debug=full）|--profile dev --config profile.dev.debug=true --config 'profile.dev.package.\"*\".opt-level=0'|"
   "dev: このリポジトリ（deps opt1, line-tables-only）|--profile dev|"
   "dev: + GNU ld（rust-lld を使わない）|--profile dev|-C linker-features=-lld"
-  "release: cargo 既定（lto=false, cgu=16）|--release --config profile.release.lto=false|"
-  "release: このリポジトリ（thin LTO）|--release|"
-  "release: thin LTO + target-cpu=native|--release|-C target-cpu=native"
+  "release: cargo 既定（このリポジトリも同じ）|--release|"
+  "release: + thin LTO|--release --config 'profile.release.lto=\"thin\"'|"
+  "release: + target-cpu=native|--release|-C target-cpu=native"
   "dist: fat LTO, cgu=1, panic=abort, strip|--profile dist|"
 )
 

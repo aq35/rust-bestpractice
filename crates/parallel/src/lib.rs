@@ -1,4 +1,4 @@
-//! 並列化の実験対象。CPU バウンドな処理を「逐次 / std::thread::scope / rayon」で比べ、
+//! 並列化の実験対象。CPU バウンドな処理を「逐次 / `std::thread::scope` / rayon」で比べ、
 //! 共有状態の扱い（Mutex / Atomic / スレッドローカル集計）と false sharing を測る。
 
 use std::sync::Mutex;
@@ -264,13 +264,11 @@ pub async fn tick_latency_under_cpu_load(mode: CpuMode, jobs: usize) -> std::tim
         let range = lo..lo + 200_000;
         hs.push(match mode {
             CpuMode::Inline => tokio::spawn(async move { count_primes_seq(range) }),
-            CpuMode::SpawnBlocking => {
-                tokio::spawn(async move {
-                    tokio::task::spawn_blocking(move || count_primes_seq(range))
-                        .await
-                        .unwrap_or(0)
-                })
-            }
+            CpuMode::SpawnBlocking => tokio::spawn(async move {
+                tokio::task::spawn_blocking(move || count_primes_seq(range))
+                    .await
+                    .unwrap_or(0)
+            }),
             CpuMode::Rayon => tokio::spawn(async move {
                 let (tx, rx) = tokio::sync::oneshot::channel();
                 rayon::spawn(move || {

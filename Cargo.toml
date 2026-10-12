@@ -45,9 +45,8 @@ debug = "line-tables-only"   # デバッグ情報を減らしてリンク時間�
 [profile.dev.package."*"]
 opt-level = 1                # 依存だけ最適化。自分のコードの再ビルドは速いまま
 
+# release は cargo の既定のまま（thin LTO は実行 2% 速いだけで、再ビルドが 0.9s → 4.8s に延びた）
 [profile.release]
-lto = "thin"
-codegen-units = 16
 
 [profile.bench]
 inherits = "release"

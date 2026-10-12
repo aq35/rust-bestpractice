@@ -1,3 +1,4 @@
+#![allow(clippy::wildcard_imports)] // 実験対象を一括で取り込む
 //! 可用性の実験をすべて実行し、Markdown の表で出力する（時間は仮想時間）。
 use availability::*;
 use std::time::Duration;

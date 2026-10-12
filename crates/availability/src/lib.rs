@@ -70,7 +70,11 @@ pub enum RetryPolicy {
     /// タイムアウト + 指数バックオフ（ジッター付き）で最大 n 回
     TimeoutRetry { per_try: Duration, max_attempts: u32 },
     /// 上に加えて、全体の期限（deadline）を設ける
-    TimeoutRetryDeadline { per_try: Duration, max_attempts: u32, deadline: Duration },
+    TimeoutRetryDeadline {
+        per_try: Duration,
+        max_attempts: u32,
+        deadline: Duration,
+    },
 }
 
 pub async fn call_with_policy(policy: RetryPolicy, rng: &mut Rng) -> Result<(), CallError> {
@@ -79,14 +83,17 @@ pub async fn call_with_policy(policy: RetryPolicy, rng: &mut Rng) -> Result<(), 
         RetryPolicy::TimeoutOnly(t) => timeout(t, flaky_upstream(rng))
             .await
             .unwrap_or(Err(CallError::Timeout)),
-        RetryPolicy::TimeoutRetry { per_try, max_attempts } => {
-            retry(per_try, max_attempts, rng).await
-        }
-        RetryPolicy::TimeoutRetryDeadline { per_try, max_attempts, deadline } => {
-            timeout(deadline, retry(per_try, max_attempts, rng))
-                .await
-                .unwrap_or(Err(CallError::Timeout))
-        }
+        RetryPolicy::TimeoutRetry {
+            per_try,
+            max_attempts,
+        } => retry(per_try, max_attempts, rng).await,
+        RetryPolicy::TimeoutRetryDeadline {
+            per_try,
+            max_attempts,
+            deadline,
+        } => timeout(deadline, retry(per_try, max_attempts, rng))
+            .await
+            .unwrap_or(Err(CallError::Timeout)),
     }
 }
 
@@ -182,13 +189,14 @@ pub async fn run_overload(adm: Admission, rps: u64, duration: Duration, capacity
             (sem.clone(), in_flight.clone(), peak.clone(), rejected.clone());
         set.spawn(async move {
             let _permit = match adm {
-                Admission::SemaphoreShed(_) => match sem.try_acquire_owned() {
-                    Ok(p) => p,
-                    Err(_) => {
+                Admission::SemaphoreShed(_) => {
+                    if let Ok(p) = sem.try_acquire_owned() {
+                        p
+                    } else {
                         rejected.fetch_add(1, Ordering::Relaxed);
                         return None;
                     }
-                },
+                }
                 _ => sem.acquire_owned().await.ok()?,
             };
             let now = in_flight.fetch_add(1, Ordering::SeqCst) + 1;
@@ -260,7 +268,11 @@ pub async fn run_queue(bound: Option<usize>) -> QueueStats {
     drop(tx);
     let mut w = consumer.await.unwrap_or_default();
     w.sort();
-    QueueStats { max_queue_len: max_q, p99_wait: percentile(&w, 0.99), producer_finished_at }
+    QueueStats {
+        max_queue_len: max_q,
+        p99_wait: percentile(&w, 0.99),
+        producer_finished_at,
+    }
 }
 
 // ============ 4. パニックの隔離 ============
@@ -292,10 +304,15 @@ pub async fn run_panic_isolation() -> PanicStats {
         }
     }
     let alive = tokio::spawn(async { 42 }).await.ok() == Some(42);
-    PanicStats { tasks: 100, panicked, completed: ok, runtime_alive: alive }
+    PanicStats {
+        tasks: 100,
+        panicked,
+        completed: ok,
+        runtime_alive: alive,
+    }
 }
 
-/// std::sync::Mutex はパニックで「毒」状態になる。`into_inner` で回復できるか確かめる
+/// `std::sync::Mutex` はパニックで「毒」状態になる。`into_inner` で回復できるか確かめる
 #[must_use]
 pub fn mutex_poison_recovery() -> (bool, u32) {
     let m = Arc::new(std::sync::Mutex::new(0u32));

@@ -18,13 +18,20 @@ struct Item {
 }
 
 fn main() -> Result<(), serde_json::Error> {
-    let n: u64 = std::env::args().nth(1).and_then(|s| s.parse().ok()).unwrap_or(200_000);
+    let n: u64 = std::env::args()
+        .nth(1)
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(200_000);
     let orders: Vec<Order> = (0..n)
         .map(|i| Order {
             id: i,
             user: format!("user{}", i % 1000),
-            items: (0..(i % 5 + 1))
-                .map(|j| Item { sku: format!("SKU-{j}"), qty: (j + 1) as u32, price_cents: 100 + i % 997 })
+            items: (0..=(i % 5))
+                .map(|j| Item {
+                    sku: format!("SKU-{j}"),
+                    qty: (j + 1) as u32,
+                    price_cents: 100 + i % 997,
+                })
                 .collect(),
         })
         .collect();

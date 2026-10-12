@@ -12,6 +12,9 @@ fn main() {
             .build()
             .expect("runtime");
         let worst = rt.block_on(tick_latency_under_cpu_load(mode, 8));
-        println!("| {mode:?} | {workers} | 8 | {:.1} ms |", worst.as_secs_f64() * 1e3);
+        println!(
+            "| {mode:?} | {workers} | 8 | {:.1} ms |",
+            worst.as_secs_f64() * 1e3
+        );
     }
 }

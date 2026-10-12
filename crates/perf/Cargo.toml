@@ -13,6 +13,9 @@ thiserror.workspace = true
 anyhow.workspace = true
 smallvec.workspace = true
 
+[lib]
+bench = false  # criterion 以外の harness に --noplot などが渡って失敗するのを防ぐ
+
 [dev-dependencies]
 criterion.workspace = true
 

@@ -1,0 +1,62 @@
+[workspace]
+resolver = "3"
+members = ["crates/*"]
+
+[workspace.package]
+edition = "2024"
+rust-version = "1.85"
+license = "MIT"
+
+[workspace.dependencies]
+criterion = { version = "0.5", default-features = false, features = ["cargo_bench_support"] }
+rayon = "1"
+tokio = { version = "1", features = ["full"] }
+rustc-hash = "2"
+ahash = "0.8"
+thiserror = "2"
+anyhow = "1"
+smallvec = "1"
+crossbeam-channel = "0.5"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# 保守性: lint はワークスペースで一元管理し、各 crate は `[lints] workspace = true` で継承する
+[workspace.lints.rust]
+unsafe_code = "forbid"
+unused_must_use = "deny"
+rust_2018_idioms = { level = "warn", priority = -1 }
+
+[workspace.lints.clippy]
+all = { level = "warn", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+module_name_repetitions = "allow"
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"
+cast_precision_loss = "allow"
+cast_possible_truncation = "allow"
+cast_sign_loss = "allow"
+unwrap_used = "warn"
+dbg_macro = "warn"
+
+# ---- プロファイル（実験 build で効果を測定済み。docs/results.md 参照） ----
+[profile.dev]
+debug = "line-tables-only"   # デバッグ情報を減らしてリンク時間とサイズを削減
+
+[profile.dev.package."*"]
+opt-level = 1                # 依存だけ最適化。自分のコードの再ビルドは速いまま
+
+[profile.release]
+lto = "thin"
+codegen-units = 16
+
+[profile.bench]
+inherits = "release"
+debug = "line-tables-only"
+
+# 配布用: 実行速度・サイズ優先（ビルドは遅い）
+[profile.dist]
+inherits = "release"
+lto = "fat"
+codegen-units = 1
+panic = "abort"
+strip = "symbols"
